@@ -1,0 +1,7 @@
+numpy
+pandas
+snowflake-connector-python
+streamlit
+plotly
+sqlparse
+boto3
