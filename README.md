@@ -11,17 +11,10 @@ Easily download from S3 with a nice streamlit UI
 
 ### For Mac/Linux
 
-1. **Creating a Virtual Environment and Installing Dependencies**
+1. **Creating a Virtual Environment, Installing Dependencies, and App Run**
 
     ```bash
-    python3 -m venv venv && source venv/bin/activate && pip3 install --upgrade pip && pip3 install -r requirements.txt &&     streamlit run app.py
-
-    ```
-
-2. **Running the Streamlit App**
-
-    ```bash
-    streamlit run app.py
+    python3 -m venv venv && source venv/bin/activate && pip3 install --upgrade pip && pip3 install -r requirements.txt && streamlit run app.py
     ```
 
 ### For Windows
