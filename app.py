@@ -16,7 +16,9 @@ def main():
     with st.sidebar:
         st.header("Configuration ⚙️")
         aws_access_key_id = st.text_input(
-            "AWS Access Key ID 🔑", placeholder="AKIAIOSFODNN7EXAMPLE"
+            "AWS Access Key ID 🔑",
+            placeholder="AKIAIOSFODNN7EXAMPLE",
+            type="password",
         )
         aws_secret_access_key = st.text_input(
             "AWS Secret Access Key 🔒",
