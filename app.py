@@ -111,9 +111,37 @@ def download_files(s3_client, bucket, prefix, local_dir):
         st.error(f"❌ Unexpected failure during download: {e}")
 
 
+def upload_files(s3_client, bucket, s3_path_prefix, uploaded_files):
+    try:
+        successful_uploads = 0
+        for uploaded_file in uploaded_files:
+            file_path = (
+                os.path.join(s3_path_prefix, uploaded_file.name)
+                if s3_path_prefix
+                else uploaded_file.name
+            )
+            s3_client.upload_fileobj(uploaded_file, bucket, file_path)
+            successful_uploads += 1
+            st.write(f"⬆️ Uploaded: {uploaded_file.name} → {file_path}")
+
+        if successful_uploads > 0:
+            st.success(
+                f"✅ Successfully uploaded {successful_uploads} files to bucket '{bucket}'."
+            )
+        else:
+            st.warning("⚠️ No files were uploaded.")
+    except Exception as e:
+        st.error(f"❌ Failed to upload files: {str(e)}")
+
+
 def main():
-    st.set_page_config("S3 Bucket Downloader", "📦", layout="wide")
-    st.title("📦 S3 Bucket File Lister & Downloader")
+    st.set_page_config(
+        page_title="S3 Bucket Manager",
+        page_icon="📦",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    st.title("📦 S3 Bucket Manager - Upload & Download")
 
     with st.sidebar:
         st.header("Configuration ⚙️")
@@ -130,32 +158,53 @@ def main():
             "Role ARN 🛡️ (Optional)",
             placeholder="arn:aws:iam::123456789012:role/RoleName",
         )
-        bucket = st.text_input("Bucket Name 🪣", placeholder="rain-drsquatch")
-        prefix = st.text_input("S3 Path Prefix 📁", placeholder="egress/")
-        local_dir = st.text_input("Local Directory Path 📂", placeholder="./downloads")
-        list_btn = st.button("List Files 📜")
-        download_btn = st.button("Download All Files 📥")
+        bucket = st.text_input("Bucket Name 🪣", placeholder="my-s3-bucket")
+        prefix = st.text_input("S3 Path Prefix 📁", placeholder="path/to/folder/")
 
     if not region:
         st.error("❌ AWS Region is required")
         return
 
-    s3 = create_s3_client(region, access_key, secret_key, role_arn)
-    if not s3:
+    s3_client = create_s3_client(region, access_key, secret_key, role_arn)
+    if not s3_client:
         return
 
-    if list_btn:
-        st.info("🔍 Fetching file list...")
-        files = list_files(s3, bucket, prefix)
-        if files:
-            st.subheader("Files in Bucket")
-            st.table({"Files": files})
-        else:
-            st.info("No files found.")
+    tab1, tab2, tab3 = st.tabs(["📤 Upload", "📥 Download", "📜 List Files"])
 
-    if download_btn:
-        st.info("📥 Starting file download...")
-        download_files(s3, bucket, prefix, local_dir)
+    with tab1:
+        st.header("Upload Files to S3")
+        uploaded_files = st.file_uploader(
+            "Choose files to upload", accept_multiple_files=True
+        )
+        if st.button("Upload Files 📤"):
+            if uploaded_files and bucket:
+                upload_files(s3_client, bucket, prefix, uploaded_files)
+            else:
+                st.warning("⚠️ Please select files and specify a bucket name.")
+
+    with tab2:
+        st.header("Download Files from S3")
+        local_dir = st.text_input("Local Directory Path 📂", placeholder="./downloads")
+        if st.button("Download All Files 📥"):
+            if bucket:
+                st.info("📥 Starting file download...")
+                download_files(s3_client, bucket, prefix, local_dir)
+            else:
+                st.warning("⚠️ Please specify a bucket name.")
+
+    with tab3:
+        st.header("List Files in S3 Bucket")
+        if st.button("List Files 📜"):
+            if bucket:
+                st.info("🔍 Fetching file list...")
+                files = list_files(s3_client, bucket, prefix)
+                if files:
+                    st.subheader(f"Files in {bucket}/{prefix or ''}")
+                    st.table({"Files": files})
+                else:
+                    st.info("No files found.")
+            else:
+                st.warning("⚠️ Please specify a bucket name.")
 
 
 if __name__ == "__main__":
